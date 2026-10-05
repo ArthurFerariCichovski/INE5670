@@ -2,13 +2,12 @@
 // Include Libraries
 #include "Arduino.h"
 #include "DHT.h"
-#include "ESP8266.h"
+#include <ESP8266WiFi.h>
 
 
 // Pin Definitions
 #define DHT_PIN_DATA	2
-#define WIFI_PIN_TX	11
-#define WIFI_PIN_RX	10
+
 
 
 
@@ -25,8 +24,8 @@ char* const host = "www.google.com";
 int hostPort = 80;
 // object initialization
 DHT dht(DHT_PIN_DATA);
-ESP8266 wifi(WIFI_PIN_RX,WIFI_PIN_TX);
-
+// Temperatura máxima permitida
+const float LIMITE_TEMP = 28.0;
 
 // define vars for testing menu
 const int timeout = 10000;       //define timeout of 10 sec
@@ -43,7 +42,7 @@ void setup()
     Serial.println("start");
     
     dht.begin();
-    wifi.init(SSID, PASSWORD);
+    WiFi.begin(SSID, PASSWORD);
     menuOption = menu();
     
     // wait for connection
