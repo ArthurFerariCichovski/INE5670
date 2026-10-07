@@ -1,31 +1,19 @@
 
 // Include Libraries
 #include "Arduino.h"
-#include "DHT.h"
-#include <ESP8266WiFi.h>
+#include "DHT11.h"
 
 
 // Pin Definitions
-#define DHT_PIN_DATA	2
-
+#define DHT_PIN_DATA	13
 
 
 
 // Global variables and defines
-// ====================================================================
-// vvvvvvvvvvvvvvvvvvvv ENTER YOUR WI-FI SETTINGS  vvvvvvvvvvvvvvvvvvvv
-//
-const char *SSID     = "WIFI-SSID"; // Enter your Wi-Fi name 
-const char *PASSWORD = "PASSWORD" ; // Enter your Wi-Fi password
-//
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-// ====================================================================
-char* const host = "www.google.com";
-int hostPort = 80;
+
 // object initialization
-DHT dht(DHT_PIN_DATA);
-// Temperatura máxima permitida
-const float LIMITE_TEMP = 28.0;
+DHT11 dht11(DHT_PIN_DATA);
+
 
 // define vars for testing menu
 const int timeout = 10000;       //define timeout of 10 sec
@@ -40,22 +28,10 @@ void setup()
     Serial.begin(9600);
     while (!Serial) ; // wait for serial port to connect. Needed for native USB
     Serial.println("start");
-    
-    dht.begin();
-    WiFi.begin(SSID, PASSWORD);
+    //pinMode(5, OUTPUT);
+    // dht11.begin();
     menuOption = menu();
     
-    // wait for connection
-    while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(ssid);
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-
 }
 
 // Main logic of your circuit. It defines the interaction between the components you selected. After setup, it runs over and over again, in an eternal loop.
@@ -66,26 +42,11 @@ void loop()
     if(menuOption == '1') {
     // DHT22/11 Humidity and Temperature Sensor - Test Code
     // Reading humidity in %
-    float dhtHumidity = dht.readHumidity();
-    // Read temperature in Celsius, for Fahrenheit use .readTempF()
-    float dhtTempC = dht.readTempC();
-    Serial.print(F("Humidity: ")); Serial.print(dhtHumidity); Serial.print(F(" [%]\t"));
-    Serial.print(F("Temp: ")); Serial.print(dhtTempC); Serial.println(F(" [C]"));
+    float temperature = dht11.readTemperature();
+    float humidity = dht11.readHumidity();
 
-    }
-    else if(menuOption == '2') {
-    // ESP8266-01 - Wifi Module - Test Code
-    //Send request for www.google.com at port 80
-    wifi.httpGet(host, hostPort);
-    // get response buffer. Note that it is set to 250 bytes due to the Arduino low memory
-    char* wifiBuf = wifi.getBuffer();
-    //Comment out to print the buffer to Serial Monitor
-    //for(int i=0; i< MAX_BUFFER_SIZE ; i++)
-    //  Serial.print(wifiBuf[i]);
-    //search buffer for the date and time and print it to the serial monitor. This is GMT time!
-    char *wifiDateIdx = strstr (wifiBuf, "Date");
-    for (int i = 0; wifiDateIdx[i] != '\n' ; i++)
-    Serial.print(wifiDateIdx[i]);
+    Serial.print(F("Humidity: ")); Serial.print(humidity); Serial.print(F(" [%]\t"));
+    Serial.print(F("Temp: ")); Serial.print(temperature); Serial.println(F(" [C]"));
 
     }
     
@@ -105,7 +66,6 @@ char menu()
 
     Serial.println(F("\nWhich component would you like to test?"));
     Serial.println(F("(1) DHT22/11 Humidity and Temperature Sensor"));
-    Serial.println(F("(2) ESP8266-01 - Wifi Module"));
     Serial.println(F("(menu) send anything else or press on board reset button\n"));
     while (!Serial.available());
 
@@ -118,8 +78,6 @@ char menu()
             
             if(c == '1') 
     			Serial.println(F("Now Testing DHT22/11 Humidity and Temperature Sensor"));
-    		else if(c == '2') 
-    			Serial.println(F("Now Testing ESP8266-01 - Wifi Module"));
             else
             {
                 Serial.println(F("illegal input!"));
@@ -129,6 +87,7 @@ char menu()
             return c;
         }
     }
+    return 0;   // nenhum caractere válido recebido
 }
 
 /*******************************************************
