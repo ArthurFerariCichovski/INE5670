@@ -1,135 +1,84 @@
+/**
+ * DHT11 Temperature Reader
+ * This sketch reads temperature data from the DHT11 sensor and prints the value to the serial port.
+ * It also handles potential error states that might occur during reading.
+ *
+ * Author: Dhruba Saha
+ * Version: 2.1.0
+ * License: MIT
+ */
 
-// Include Libraries
-#include "Arduino.h"
-#include "DHT11.h"
+// Include the DHT11 library for interfacing with the sensor.
+#include <DHT11.h>
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
+
+#ifndef STASSID
+#define STASSID "Varduga"
+#define STAPSK "12345678"
+#endif
 
 
-// Pin Definitions
-#define DHT_PIN_DATA	13
+const char* ssid = STASSID;
+const char* password = STAPSK;
 
+ESP8266WebServer server(80);
 
+// Create an instance of the DHT11 class.
+// - For Arduino: Connect the sensor to Digital I/O Pin 2.
+// - For ESP32: Connect the sensor to pin GPIO2 or P2.
+// - For ESP8266: Connect the sensor to GPIO2 or D4.
+DHT11 dht11(13);
 
-// Global variables and defines
-
-// object initialization
-DHT11 dht11(DHT_PIN_DATA);
-
-
-// define vars for testing menu
-const int timeout = 10000;       //define timeout of 10 sec
-char menuOption = 0;
-long time0;
-
-// Setup the essentials for your circuit to work. It runs first every time your circuit is powered with electricity.
-void setup() 
-{
-    // Setup Serial which is useful for debugging
-    // Use the Serial Monitor to view printed messages
+void setup() {
+    // Initialize serial communication to allow debugging and data readout.
+    // Using a baud rate of 9600 bps.
     Serial.begin(9600);
-    while (!Serial) ; // wait for serial port to connect. Needed for native USB
-    Serial.println("start");
-    //pinMode(5, OUTPUT);
-    // dht11.begin();
-    menuOption = menu();
-    
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, password);
+    // Uncomment the line below to set a custom delay between sensor readings (in milliseconds).
+    // dht11.setDelay(500); // Set this to the desired delay. Default is 500ms.
+    // Wait for connection
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      Serial.print(".");
+    }
+    Serial.println("");
+    Serial.print("Connected to ");
+    Serial.println(ssid);
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
 }
 
-// Main logic of your circuit. It defines the interaction between the components you selected. After setup, it runs over and over again, in an eternal loop.
-void loop() 
-{
-    
-    
-    if(menuOption == '1') {
-    // DHT22/11 Humidity and Temperature Sensor - Test Code
-    // Reading humidity in %
-    float temperature = dht11.readTemperature();
-    float humidity = dht11.readHumidity();
+void loop() {
+    // Attempt to read the temperature value from the DHT11 sensor.
+    int temperature = dht11.readTemperature();
+    // Attempt to read the humidity value from the DHT11 sensor.
+    int humidity = dht11.readHumidity();
 
-    Serial.print(F("Humidity: ")); Serial.print(humidity); Serial.print(F(" [%]\t"));
-    Serial.print(F("Temp: ")); Serial.print(temperature); Serial.println(F(" [C]"));
-
+    // Check the result of the reading.
+    // If there's no error, print the humidity value.
+    // If there's an error, print the appropriate error message.
+    if (humidity != DHT11::ERROR_CHECKSUM && humidity != DHT11::ERROR_TIMEOUT) {
+        Serial.print("Humidity: ");
+        Serial.print(humidity);
+        Serial.println(" %");
+    } else {
+        // Print error message based on the error code.
+        Serial.println(DHT11::getErrorString(humidity));
     }
-    
-    if (millis() - time0 > timeout)
-    {
-        menuOption = menu();
+    // Check the result of the reading.
+    // If there's no error, print the temperature value.
+    // If there's an error, print the appropriate error message.
+    if (temperature != DHT11::ERROR_CHECKSUM && temperature != DHT11::ERROR_TIMEOUT) {
+        Serial.print("Temperature: ");
+        Serial.print(temperature);
+        Serial.println(" °C");
+    } else {
+        // Print error message based on the error code.
+        Serial.println(DHT11::getErrorString(temperature));
     }
-    
+    delay(1000);
 }
-
-
-
-// Menu function for selecting the components to be tested
-// Follow serial monitor for instrcutions
-char menu()
-{
-
-    Serial.println(F("\nWhich component would you like to test?"));
-    Serial.println(F("(1) DHT22/11 Humidity and Temperature Sensor"));
-    Serial.println(F("(menu) send anything else or press on board reset button\n"));
-    while (!Serial.available());
-
-    // Read data from serial monitor if received
-    while (Serial.available()) 
-    {
-        char c = Serial.read();
-        if (isAlphaNumeric(c)) 
-        {   
-            
-            if(c == '1') 
-    			Serial.println(F("Now Testing DHT22/11 Humidity and Temperature Sensor"));
-            else
-            {
-                Serial.println(F("illegal input!"));
-                return 0;
-            }
-            time0 = millis();
-            return c;
-        }
-    }
-    return 0;   // nenhum caractere válido recebido
-}
-
-/*******************************************************
-
-*    Circuito.io is an automatic generator of schematics and code for off
-*    the shelf hardware combinations.
-
-*    Copyright (C) 2016 Roboplan Technologies Ltd.
-
-*    This program is free software: you can redistribute it and/or modify
-*    it under the terms of the GNU General Public License as published by
-*    the Free Software Foundation, either version 3 of the License, or
-*    (at your option) any later version.
-
-*    This program is distributed in the hope that it will be useful,
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*    GNU General Public License for more details.
-
-*    You should have received a copy of the GNU General Public License
-*    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-*    In addition, and without limitation, to the disclaimers of warranties 
-*    stated above and in the GNU General Public License version 3 (or any 
-*    later version), Roboplan Technologies Ltd. ("Roboplan") offers this 
-*    program subject to the following warranty disclaimers and by using 
-*    this program you acknowledge and agree to the following:
-*    THIS PROGRAM IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS, AND 
-*    WITHOUT WARRANTIES OF ANY KIND EITHER EXPRESS OR IMPLIED.  ROBOPLAN 
-*    HEREBY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT 
-*    NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, TITLE, FITNESS 
-*    FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND THOSE ARISING BY 
-*    STATUTE OR FROM A COURSE OF DEALING OR USAGE OF TRADE. 
-*    YOUR RELIANCE ON, OR USE OF THIS PROGRAM IS AT YOUR SOLE RISK.
-*    ROBOPLAN DOES NOT GUARANTEE THAT THE PROGRAM WILL BE FREE OF, OR NOT 
-*    SUSCEPTIBLE TO, BUGS, SECURITY BREACHES, OR VIRUSES. ROBOPLAN DOES 
-*    NOT WARRANT THAT YOUR USE OF THE PROGRAM, INCLUDING PURSUANT TO 
-*    SCHEMATICS, INSTRUCTIONS OR RECOMMENDATIONS OF ROBOPLAN, WILL BE SAFE 
-*    FOR PERSONAL USE OR FOR PRODUCTION OR COMMERCIAL USE, WILL NOT 
-*    VIOLATE ANY THIRD PARTY RIGHTS, WILL PROVIDE THE INTENDED OR DESIRED
-*    RESULTS, OR OPERATE AS YOU INTENDED OR AS MAY BE INDICATED BY ROBOPLAN. 
-*    YOU HEREBY WAIVE, AGREE NOT TO ASSERT AGAINST, AND RELEASE ROBOPLAN, 
-*    ITS LICENSORS AND AFFILIATES FROM, ANY CLAIMS IN CONNECTION WITH ANY OF 
-*    THE ABOVE. 
-********************************************************/
