@@ -1,20 +1,20 @@
 /**
- * DHT11 Temperature Reader
- * This sketch reads temperature data from the DHT11 sensor and prints the value to the serial port.
- * It also handles potential error states that might occur during reading.
+ * Monitor de Temperatura e Umidade com ESP8266 + DHT11
  *
- * Author: Dhruba Saha
- * Version: 2.1.0
- * License: MIT
+ * Conecta a placa a uma rede Wi-Fi, lê temperatura e umidade do sensor
+ * DHT11 a cada segundo e envia os valores pela porta serial.
+ *
+ * Baseado no exemplo "DHT11 Temperature Reader" da biblioteca DHT11
+ * (Dhruba Saha, v2.1.0, MIT) e no exemplo "HelloServer" do ESP8266WiFi.
  */
 
-// Include the DHT11 library for interfacing with the sensor.
-#include <DHT11.h>
-#include <ESP8266WiFi.h>
+#include <DHT11.h> // Biblioteca do sensor DHT11
+#include <ESP8266WiFi.h> // Conexão Wi-Fi do ESP8266
 #include <WiFiClient.h>
-#include <ESP8266WebServer.h>
+#include <ESP8266WebServer.h> // Servidor HTTP (preparado para uso futuro)
 #include <ESP8266mDNS.h>
 
+// Credenciais da rede Wi-Fi
 #ifndef STASSID
 #define STASSID "Varduga"
 #define STAPSK "12345678"
@@ -24,61 +24,59 @@
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
+// Servidor HTTP na porta 80 (ainda não iniciado; será usado para
+// disponibilizar as leituras ao backend/app)
 ESP8266WebServer server(80);
 
-// Create an instance of the DHT11 class.
-// - For Arduino: Connect the sensor to Digital I/O Pin 2.
-// - For ESP32: Connect the sensor to pin GPIO2 or P2.
-// - For ESP8266: Connect the sensor to GPIO2 or D4.
+// Sensor DHT11 com o pino de dados no GPIO13 (pino D7 no NodeMCU/Wemos)
 DHT11 dht11(13);
 
 void setup() {
-    // Initialize serial communication to allow debugging and data readout.
-    // Using a baud rate of 9600 bps.
+    // Inicia a comunicação serial a 9600 bps para depuração
     Serial.begin(9600);
+    
+    // Conecta à rede Wi-Fi em modo estação (cliente)
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
-    // Uncomment the line below to set a custom delay between sensor readings (in milliseconds).
-    // dht11.setDelay(500); // Set this to the desired delay. Default is 500ms.
-    // Wait for connection
+
+    // Aguarda a conexão, imprimindo um ponto a cada 0,5 s
     while (WiFi.status() != WL_CONNECTED) {
       delay(500);
       Serial.print(".");
     }
+
+    // Conectado: mostra a rede e o IP recebido
     Serial.println("");
-    Serial.print("Connected to ");
+    Serial.print("Conectado a ");
     Serial.println(ssid);
-    Serial.print("IP address: ");
+    Serial.print("Endereco IP: ");
     Serial.println(WiFi.localIP());
 }
 
 void loop() {
-    // Attempt to read the temperature value from the DHT11 sensor.
+    // Lê temperatura e umidade do sensor.
+    // Em caso de falha, a biblioteca devolve um código de erro
+    // (ERROR_CHECKSUM ou ERROR_TIMEOUT) no lugar do valor.
     int temperature = dht11.readTemperature();
-    // Attempt to read the humidity value from the DHT11 sensor.
     int humidity = dht11.readHumidity();
 
-    // Check the result of the reading.
-    // If there's no error, print the humidity value.
-    // If there's an error, print the appropriate error message.
+    // Umidade: imprime o valor ou a mensagem de erro
     if (humidity != DHT11::ERROR_CHECKSUM && humidity != DHT11::ERROR_TIMEOUT) {
-        Serial.print("Humidity: ");
+        Serial.print("Umidade: ");
         Serial.print(humidity);
         Serial.println(" %");
     } else {
-        // Print error message based on the error code.
         Serial.println(DHT11::getErrorString(humidity));
     }
-    // Check the result of the reading.
-    // If there's no error, print the temperature value.
-    // If there's an error, print the appropriate error message.
+    // Temperatura: imprime o valor ou a mensagem de erro
     if (temperature != DHT11::ERROR_CHECKSUM && temperature != DHT11::ERROR_TIMEOUT) {
-        Serial.print("Temperature: ");
+        Serial.print("Temperatura: ");
         Serial.print(temperature);
         Serial.println(" °C");
     } else {
-        // Print error message based on the error code.
         Serial.println(DHT11::getErrorString(temperature));
     }
+    
+    // O DHT11 só suporta uma leitura por segundo
     delay(1000);
 }
