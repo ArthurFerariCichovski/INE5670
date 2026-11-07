@@ -1,0 +1,9 @@
+Passo 8: conectar a Wemos
+Ative a ancoragem do celular em 2.4 GHz e conecte o PC nela.
+Descubra o IP do PC (ipconfig no Windows, procure o “Endereço IPv4” do Wi-Fi).
+No .ino, ajuste SERVER_URL com esse IP (por exemplo http://192.168.43.100:3000/leituras) e confira ssid e password.
+Teste a rede: no navegador do celular, abra http://IP_DO_PC:3000/leituras. Se aparecer a lista, a rede está liberada.
+Grave o .ino na placa e abra o Monitor Serial a 9600. Você deve ver POST -> codigo HTTP: 201 a cada 5 segundos.
+No terminal do servidor, as leituras devem aparecer a cada envio.
+
+Se o Windows perguntar sobre o firewall quando o Node iniciar, permita o acesso.
